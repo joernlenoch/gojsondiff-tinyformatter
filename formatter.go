@@ -19,23 +19,19 @@ func NewTinyFormatter() *TinyFormatter {
 
 type TinyFormatter struct {}
 
-func (f *TinyFormatter) FormatAsJson(diff diff.Diff) (json map[string]interface{}, err error) {
-  return f.formatObject(diff.Deltas())
-}
-
-func (f *TinyFormatter) formatObject(deltas []diff.Delta) (deltaJson map[string]interface{}, err error) {
+func (f *TinyFormatter) FormatObject(deltas []diff.Delta) (deltaJson map[string]interface{}, err error) {
   deltaJson = map[string]interface{}{}
   for _, delta := range deltas {
     switch delta.(type) {
     case *diff.Object:
       d := delta.(*diff.Object)
-      deltaJson[d.Position.String()], err = f.formatObject(d.Deltas)
+      deltaJson[d.Position.String()], err = f.FormatObject(d.Deltas)
       if err != nil {
         return nil, err
       }
     case *diff.Array:
       d := delta.(*diff.Array)
-      deltaJson[d.Position.String()], err = f.formatArray(d.Deltas)
+      deltaJson[d.Position.String()], err = f.FormatArray(d.Deltas)
       if err != nil {
         return nil, err
       }
@@ -52,27 +48,27 @@ func (f *TinyFormatter) formatObject(deltas []diff.Delta) (deltaJson map[string]
       d := delta.(*diff.Deleted)
       deltaJson[d.PrePosition().String()] = []interface{}{0, 0, DeltaDelete}
     case *diff.Moved:
-      return nil, errors.New("Delta type 'Move' is not supported in objects")
+      return nil, errors.New("delta type 'Move' is not supported in objects")
     default:
-      return nil, errors.New(fmt.Sprintf("Unknown Delta type detected: %#v", delta))
+      return nil, errors.New(fmt.Sprintf("unknown delta type detected: %#v", delta))
     }
   }
   return
 }
 
-func (f *TinyFormatter) formatArray(deltas []diff.Delta) (deltaJson map[string]interface{}, err error) {
+func (f *TinyFormatter) FormatArray(deltas []diff.Delta) (deltaJson map[string]interface{}, err error) {
   deltaJson = map[string]interface{}{
     "_t": "a",
   }
   for _, delta := range deltas {
     switch d := delta.(type) {
     case *diff.Object:
-      deltaJson[d.Position.String()], err = f.formatObject(d.Deltas)
+      deltaJson[d.Position.String()], err = f.FormatObject(d.Deltas)
       if err != nil {
         return nil, err
       }
     case *diff.Array:
-      deltaJson[d.Position.String()], err = f.formatArray(d.Deltas)
+      deltaJson[d.Position.String()], err = f.FormatArray(d.Deltas)
       if err != nil {
         return nil, err
       }
@@ -87,7 +83,7 @@ func (f *TinyFormatter) formatArray(deltas []diff.Delta) (deltaJson map[string]i
     case *diff.Moved:
       deltaJson["_"+d.PrePosition().String()] = []interface{}{d.Value, d.PostPosition(), DeltaMove}
     default:
-      return nil, errors.New(fmt.Sprintf("Unknown Delta type detected: %#v", delta))
+      return nil, errors.New(fmt.Sprintf("unknown delta type detected: %#v", delta))
     }
   }
   return
